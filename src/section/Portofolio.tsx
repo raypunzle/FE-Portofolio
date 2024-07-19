@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import FormPopup from '../assets/component/FormPopup';
 import Alert from '../assets/component/Alert';
@@ -20,7 +20,6 @@ type EditingItem = (Skill | Project) & { type: 'skill' | 'project' };
 
 interface PortofolioProps {
   isLoggedIn: boolean;
-  onLogin: (isLoggedIn: boolean) => void;
 }
 
 type AlertType = 'success' | 'error';
@@ -30,14 +29,13 @@ interface AlertState {
   type: AlertType;
 }
 
-function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
+function Portofolio({ isLoggedIn }: PortofolioProps) {
   const [isSkillPopupOpen, setIsSkillPopupOpen] = useState(false);
   const [isProjectPopupOpen, setIsProjectPopupOpen] = useState(false);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [alert, setAlert] = useState<AlertState>({ show: false, message: '', type: 'success' });
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState<{ show: boolean; item: EditingItem | null }>({ show: false, item: null });
 
   useEffect(() => {
     fetchSkills();
@@ -66,6 +64,7 @@ function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
     try {
       if (!image) {
         throw new Error('No image selected');
+        console.log('Description:', description);
       }
   
       const formData = new FormData();
@@ -108,6 +107,7 @@ function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
       const formData = new FormData();
       formData.append('title', title);
       if (image) formData.append('image', image);
+      console.log('Description:', description);
 
       await axios.put(`http://localhost:3001/api/skills/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -140,10 +140,6 @@ function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
     }
   };
 
-  const handleDeleteConfirmation = (item: EditingItem) => {
-    setDeleteConfirmation({ show: true, item });
-  };
-
   const handleDeleteSkill = async (id: number) => {
     try {
       await axios.delete(`http://localhost:3001/api/skills/${id}`);
@@ -157,6 +153,7 @@ function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
 
   const handleDeleteProject = async (id: number) => {
     try {
+      console.log('Attempting to delete project with id:', id);
       await axios.delete(`http://localhost:3001/api/projects/${id}`);
       setAlert({ show: true, message: 'Project deleted successfully', type: 'success' });
       fetchProjects();
@@ -165,7 +162,6 @@ function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
       setAlert({ show: true, message: 'Error deleting project', type: 'error' });
     }
   };
-
   const SkillItem = ({ skill }: { skill: Skill }) => (
     <div className="relative group w-24 h-24 bg-gray-800 border-t-2 border-teal-700 rounded-lg overflow-hidden">
       <img src={`http://localhost:3001/${skill.image_path}`} alt={skill.title} className="w-full h-full object-cover" />
@@ -174,7 +170,7 @@ function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
         {isLoggedIn && (
           <div className="absolute bottom-2 right-2 flex">
             <button onClick={() => setEditingItem({ type: 'skill', ...skill } as EditingItem)} className="mr-2 bg-blue-500 text-white px-2 py-1 rounded text-xs"><i className="ph-pencil text-md"></i></button>
-            <button onClick={() => handleDeleteConfirmation({ type: 'skill', ...skill } as EditingItem)} className="bg-red-500 text-white px-2 py-1 rounded text-xs"><i className="ph-trash text-md"></i></button>
+            <button onClick={() => handleDeleteSkill(skill.id)} className="bg-red-500 text-white px-2 py-1 rounded text-xs"><i className="ph-trash text-md"></i></button>
           </div>
         )}
       </div>
@@ -190,7 +186,7 @@ function Portofolio({ isLoggedIn, onLogin }: PortofolioProps) {
         {isLoggedIn && (
           <div className="absolute bottom-2 right-2 flex">
             <button onClick={() => setEditingItem({ type: 'project', ...project } as EditingItem)} className="mr-2 bg-blue-500 text-white px-2 py-1 rounded text-xl"><i className="ph-pencil text-xl"></i></button>
-            <button onClick={() => handleDeleteConfirmation({ type: 'project', ...project } as EditingItem)} className="bg-red-500 text-white px-2 py-1 rounded text-xs"><i className="ph-trash text-xl"></i></button>
+            <button onClick={() => handleDeleteProject(project.id)} className="bg-red-500 text-white px-2 py-1 rounded text-xs"><i className="ph-trash text-xl"></i></button>
           </div>
         )}
       </div>
